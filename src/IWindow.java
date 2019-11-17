@@ -9,10 +9,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
+/**
+ * interfejs do okienek
+ */
 public interface IWindow {
 
     String INFO = "Aplikacja z graficznym interfejsem i operacjami na kolekcjach\nAutor: Filip Przygonski, 248892\nData: Listopad 2019";
 
+    /**
+     * zwraca scieżkę do wybranego pliku
+     * @return
+     */
     default String chosenFile(/*String[] typesOfAcceptedFiles*/) {
         JFileChooser fileChooser = new JFileChooser();
         /*FileFilter fileFilter = new FileFilter() {
@@ -45,6 +52,9 @@ public interface IWindow {
         return (file != null) ? file.getName() : null;
     }
 
+    /**
+     * wyświetla informacje o autorze
+     */
     default void info() {
         JOptionPane.showMessageDialog((Component) this, INFO, "Informacje", JOptionPane.INFORMATION_MESSAGE);
     }

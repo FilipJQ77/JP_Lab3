@@ -60,7 +60,7 @@ public class Poster implements Serializable, Comparable {
         height = 1;
         name = "Pusty plakat";
         theme = PosterTheme.NONE;
-        //aby domyœlny konstruktor Poster z zawsze poprawnymi wartoœciami nie musia³ byæ ci¹gle robiony w bloku try-catch
+        //nie u¿yte metody set aby domyœlny konstruktor Poster z zawsze poprawnymi wartoœciami nie musia³ byæ ci¹gle robiony w bloku try-catch
     }
 
     public Poster(int width, int height) throws PosterException {
@@ -101,13 +101,13 @@ public class Poster implements Serializable, Comparable {
         if (!this.name.equals(poster.name))
             return false;
 
-        if (!this.theme.equals(poster.theme))
+        else if (!this.theme.equals(poster.theme))
             return false;
 
-        if (!(this.width == poster.width))
+        else if (!(this.width == poster.width))
             return false;
 
-        if (!(this.height == poster.height))
+        else if (!(this.height == poster.height))
             return false;
 
         return true;
@@ -122,7 +122,7 @@ public class Poster implements Serializable, Comparable {
      * 5. jeœli maj¹ takie same wymiary, plakaty bêd¹ sobie równe
      *
      * @param obj obiekt z którym bêdzie porównywany plakat
-     * @return -1, gdy obiekt obj jest "wiêkszy" od this, 0 gdy s¹ sobie równe, 1 gdy obiekt obj jest "mniejszy" od this
+     * @return liczba ujemna, gdy obiekt obj jest "wiêkszy" od this, 0 gdy s¹ sobie równe, liczba dodatnia gdy obiekt obj jest "mniejszy" od this
      */
     @Override
     public int compareTo(Object obj) {
@@ -142,10 +142,10 @@ public class Poster implements Serializable, Comparable {
         int thisSize = this.width * this.height;
         int posterSize = poster.width * poster.height;
         check = Integer.compare(thisSize, posterSize);
-        if(check!=0) return check;
+        if (check != 0) return check;
 
         //szerokoœæ
-        return Integer.compare(this.width,poster.width);
+        return Integer.compare(this.width, poster.width);
     }
 
     @Override
@@ -183,7 +183,7 @@ public class Poster implements Serializable, Comparable {
     /**
      * wczytuje dane z pliku i tworzy z nich plakat
      *
-     * @param scanner scanner aplikacji
+     * @param scanner scanner zewnêtrzny
      * @return utworzony plakat
      * @throws PosterException gdy z danych nie da siê utworzyæ plakatu
      */

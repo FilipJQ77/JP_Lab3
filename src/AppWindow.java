@@ -14,6 +14,9 @@ import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.*;
 
+/**
+ * klasa zajmująca się tworzeniem/edytowaniem plakatu
+ */
 class PosterWindow extends JDialog implements ActionListener {
 
     private Poster poster;
@@ -41,8 +44,7 @@ class PosterWindow extends JDialog implements ActionListener {
         setLocationRelativeTo(owner);
 
         this.poster = poster;
-        if (this.poster != null)
-            showPoster(poster);
+        showPoster(poster);
 
         widthLabel.setFont(font);
         heightLabel.setFont(font);
@@ -81,13 +83,22 @@ class PosterWindow extends JDialog implements ActionListener {
         }
     }
 
+    /**
+     * jeśli edytujemy plakat, wyświetla obecne dane plakatu
+     * @param poster
+     */
     void showPoster(Poster poster) {
-        widthTextField.setText(String.valueOf(poster.getWidth()));
-        heightTextField.setText(String.valueOf(poster.getHeight()));
-        nameTextField.setText(poster.getName());
-        themeBox.setSelectedItem(poster.getTheme());
+        if(poster!=null){
+            widthTextField.setText(String.valueOf(poster.getWidth()));
+            heightTextField.setText(String.valueOf(poster.getHeight()));
+            nameTextField.setText(poster.getName());
+            themeBox.setSelectedItem(poster.getTheme());
+        }
     }
 
+    /**
+     * anulowanie akcji oznacza niestworzenie/niezedytowanie plakatu
+     */
     void clickedCancel() {
         if (JOptionPane.showConfirmDialog(this, "Czy na pewno chcesz anulowac akcje?", "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             this.poster = null;
@@ -95,6 +106,9 @@ class PosterWindow extends JDialog implements ActionListener {
         }
     }
 
+    /**
+     * klikając ok do zmiennej typu Poster w PosterWindow trafia stworzony/zedytowany plakat, który zostaje przekazany dalej do dodania do kolekcji
+     */
     void clickedOK() {
         boolean isError = false;
         int width = 0;
@@ -124,6 +138,9 @@ class PosterWindow extends JDialog implements ActionListener {
     }
 }
 
+/**
+ * klasa zajmująca się wyświetlaniem oraz działaniem na pojedynczej kolekcji
+ */
 class CollectionWindow extends JDialog implements ActionListener, IWindow {
 
     private CollectionOfPosters collectionOfPosters;
@@ -286,6 +303,9 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
         }
     }
 
+    /**
+     * tworzy nowy plakat i zapewnia że będzie w kolekcji
+     */
     void newPoster() {
         Poster poster = null;
         PosterWindow window = new PosterWindow(this, poster);
@@ -297,6 +317,9 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
         }
     }
 
+    /**
+     * edytuje zaznaczony plakat
+     */
     void editPoster() {
         int index = table.getSelectedRow();
         if (index >= 0) {
@@ -313,6 +336,9 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
         }
     }
 
+    /**
+     * wczytuje wiele plakatów z pliku
+     */
     void loadPosters() {
         String filename = chosenFile();
         if (filename == null) {
@@ -353,6 +379,7 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
                         addPosterToTable(posterToAdd);
                     }
                 } catch (EOFException ignored) {
+                    //wczytywanie aż do końca pliku
                     break;
                 } catch (IOException | ClassNotFoundException e) {
                     JOptionPane.showMessageDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
@@ -362,6 +389,9 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
             JOptionPane.showMessageDialog(this, "Plik musi byc typu .txt lub .bin", "Blad", JOptionPane.ERROR_MESSAGE);
     }
 
+    /**
+     * zapisuje do pliku zaznaczony plakat
+     */
     void savePoster() {
         int index = table.getSelectedRow();
         if (index >= 0) {
@@ -390,6 +420,9 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
         }
     }
 
+    /**
+     * zapisuje wszystkie plakaty w kolekcji do pliku
+     */
     void saveAllPosters() {
         String filename = chosenFile();
         if (filename == null) {
@@ -421,6 +454,9 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
         } else JOptionPane.showMessageDialog(this, "Plik musi byc typu .txt lub .bin", "Blad", JOptionPane.ERROR_MESSAGE);
     }
 
+    /**
+     * usuwa zaznaczony plakat z kolekcji
+     */
     void deletePoster() {
         int index = table.getSelectedRow();
         if (index >= 0) {
@@ -430,33 +466,45 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
         }
     }
 
+    /**
+     * sortuje kolekcje alfabetycznie
+     */
     void sortAlphabetically() {
-        if (isCollectionASet()) {
-            JOptionPane.showMessageDialog(this, "Kolekcja typu zbior nie moze byc sortowana", "Blad", JOptionPane.ERROR_MESSAGE);
-        } else {
+        try {
             collectionOfPosters.sortAlphabetically();
             refreshTable();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Kolekcja typu zbior nie moze byc sortowana", "Blad", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    /**
+     * sortuje kolekcje wg. tematu plakatu
+     */
     void sortByTheme() {
-        if (isCollectionASet()) {
-            JOptionPane.showMessageDialog(this, "Kolekcja typu zbior nie moze byc sortowana", "Blad", JOptionPane.ERROR_MESSAGE);
-        } else {
+        try {
             collectionOfPosters.sortByTheme();
             refreshTable();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Kolekcja typu zbior nie moze byc sortowana", "Blad", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    /**
+     * sortuje kolekcje wg. powierzchni plakatu
+     */
     void sortByArea() {
-        if (isCollectionASet()) {
-            JOptionPane.showMessageDialog(this, "Kolekcja typu zbior nie moze byc sortowana", "Blad", JOptionPane.ERROR_MESSAGE);
-        } else {
+        try {
             collectionOfPosters.sortByArea();
             refreshTable();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Kolekcja typu zbior nie moze byc sortowana", "Blad", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    /**
+     * zmienia nazwe kolekcji
+     */
     void changeCollectionName() {
         String newName = String.valueOf(JOptionPane.showInputDialog(this, "Podaj nowa nazwe kolekcji", "", JOptionPane.INFORMATION_MESSAGE, null, null, collectionOfPosters.getCollectionName()));
         try {
@@ -467,6 +515,9 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
         }
     }
 
+    /**
+     * zmienia typ kolekcji
+     */
     void changeCollectionType() {
         CollectionType newType = (CollectionType) JOptionPane.showInputDialog(this, "Wybierz nowy typ kolekcji", "", JOptionPane.INFORMATION_MESSAGE, null, CollectionType.values(), collectionOfPosters.getCollectionType());
         try {
@@ -478,11 +529,11 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
         }
     }
 
-    boolean isCollectionASet() {
-        CollectionType collectionType = collectionOfPosters.getCollectionType();
-        return collectionType == CollectionType.HASH_SET || collectionType == CollectionType.TREE_SET;
-    }
-
+    /**
+     * zwraca wybrany plakat
+     * @param index
+     * @return
+     */
     Poster getSelectedPoster(int index) {
         int tempIndex = index;
         Iterator iterator = collectionOfPosters.iterator();
@@ -493,17 +544,30 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
         return (Poster) iterator.next();
     }
 
+    /**
+     * dodaje plakat do tabeli
+     * @param poster
+     */
     void addPosterToTable(Poster poster) {
         String[] data = {poster.getName(), String.valueOf(poster.getTheme()), String.valueOf(poster.getWidth()), String.valueOf(poster.getHeight())};
         tableModel.addRow(data);
     }
 
+    /**
+     * dodaje kolekcje do tabeli
+     * @param collection
+     */
     void addCollectionToTable(CollectionOfPosters collection) {
         for (Poster poster : collection) {
             addPosterToTable(poster);
         }
     }
 
+    /**
+     * edytuje wybrany plakat w tabeli (NIEUŻYWANE)
+     * @param index
+     * @param editedPoster
+     */
     void editPosterInTable(int index, Poster editedPoster) {
         tableModel.setValueAt(editedPoster.getName(), index, 0);
         tableModel.setValueAt(editedPoster.getTheme(), index, 1);
@@ -511,6 +575,9 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
         tableModel.setValueAt(editedPoster.getHeight(), index, 3);
     }
 
+    /**
+     * odświeża całą tabelę
+     */
     void refreshTable() {
         tableModel.setRowCount(0);
         for (Poster poster : collectionOfPosters) {
@@ -519,6 +586,9 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
     }
 }
 
+/**
+ * klasa zajmująca się listą kolekcji, oraz ich zarządzaniem
+ */
 public class AppWindow extends JFrame implements ActionListener, IWindow {
 
     //Pasek menu
@@ -678,18 +748,29 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
         }
     }
 
-
+    /**
+     * dodaje całą kolekcję do tabeli
+     * @param collection
+     */
     void addCollectionToTable(CollectionOfPosters collection) {
         String[] data = {collection.getCollectionName(), String.valueOf(collection.getCollectionType()), String.valueOf(collection.size())};
         tableModel.addRow(data);
     }
 
+    /**
+     * edytuje wybraną kolekcje w tabeli (NIEUŻYWANE - lepiej używać refreshTable)
+     * @param index
+     * @param editedCollection
+     */
     void editCollectionInTable(int index, CollectionOfPosters editedCollection) {
         tableModel.setValueAt(editedCollection.getCollectionName(), index, 0);
         tableModel.setValueAt(editedCollection.getCollectionType(), index, 1);
         tableModel.setValueAt(editedCollection.size(), index, 2);
     }
 
+    /**
+     * odświeża całą tabelę kolekcji
+     */
     void refreshTable(){
         tableModel.setRowCount(0);
         ArrayList<CollectionOfPosters> appCollections = CollectionApp.getAppCollections();
@@ -698,6 +779,9 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
         }
     }
 
+    /**
+     * tworzy nową kolekcję i dodaje ją do listy
+     */
     void newCollection() {
         String collectionName = JOptionPane.showInputDialog("Podaj nazwe kolekcji");
         CollectionType collectionType = (CollectionType) JOptionPane.showInputDialog(this, "Wybierz typ kolekcji", "", JOptionPane.INFORMATION_MESSAGE, null, CollectionType.values(), CollectionType.VECTOR);
@@ -712,6 +796,9 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
         }
     }
 
+    /**
+     * edytuje wybraną kolekcję
+     */
     void editCollection() {
         int index = table.getSelectedRow();
         if (index >= 0) {
@@ -723,15 +810,21 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
         }
     }
 
+    /**
+     * usuwa zaznaczoną kolekcję
+     */
     void deleteCollection() {
         int index = table.getSelectedRow();
         if (index >= 0) {
             CollectionApp.deleteCollection(index);
 //            tableModel.removeRow(index);
             refreshTable();
-        }//TODO COŚ NIE DZIAŁA
+        }
     }
 
+    /**
+     * wczytuje jedną kolekcję z pliku
+     */
     void loadOneCollection() {
         String filename = chosenFile();
         if (filename == null) {
@@ -745,6 +838,9 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
         }
     }
 
+    /**
+     * wczytuje liste kolekcji z pliku
+     */
     void loadManyCollections() {
         String filename = chosenFile();
         if (filename == null) {
@@ -763,6 +859,9 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
         }
     }
 
+    /**
+     * zapisuje zaznaczoną kolekcję do pliku
+     */
     void saveSelectedCollection() {
         int index = table.getSelectedRow();
         if (index >= 0) {
@@ -778,6 +877,9 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
         }
     }
 
+    /**
+     * zapisuje listę kolekcji do pliku
+     */
     void saveAllCollections() {
         String filename = chosenFile();
         if (filename == null) {
@@ -791,6 +893,10 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
         }
     }
 
+    /**
+     * tworzy specjalną kolekcję
+     * @param specialCollectionType jaki typ specjalnej kolekcji
+     */
     void specialCollection(byte specialCollectionType) {
         String title;
         switch (specialCollectionType){
@@ -821,22 +927,37 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
         }
     }
 
+    /**
+     * tworzy sumę kolekcji
+     */
     void unionCollection() {
         specialCollection(SpecialCollectionOfPosters.UNION);
     }
 
+    /**
+     * tworzy część wspólną kolekcji
+     */
     void intersectionCollection() {
         specialCollection(SpecialCollectionOfPosters.INTERSECTION);
     }
 
+    /**
+     * tworzy różnicę kolekcji
+     */
     void differenceCollection() {
         specialCollection(SpecialCollectionOfPosters.DIFFERENCE);
     }
 
+    /**
+     * tworzy różnicę symetryczną kolekcji
+     */
     void symmetricDifferenceCollection() {
         specialCollection(SpecialCollectionOfPosters.SYMMETRIC_DIFFERENCE);
     }
 
+    /**
+     * wychodzi z programu
+     */
     void exit() {
         if (JOptionPane.showConfirmDialog(this, "Czy na pewno chcesz wyjsc z programu?", "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             System.exit(0);
