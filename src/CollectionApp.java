@@ -93,7 +93,7 @@ public class CollectionApp {
         } catch (ClassCastException e) {
             throw new IOException("Nie udalo sie wczytac listy kolekcji");
         }
-        appCollections = listOfCollections;
+        appCollections.addAll(listOfCollections);
         return appCollections;
     }
 

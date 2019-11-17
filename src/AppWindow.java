@@ -851,9 +851,7 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
         }
         try {
             ArrayList<CollectionOfPosters> toAdd = CollectionApp.loadAListOfCollectionsFromFile(filename);
-            for (CollectionOfPosters i : toAdd) {
-                addCollectionToTable(i);
-            }
+            refreshTable();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
         }
