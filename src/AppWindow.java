@@ -11,9 +11,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 import java.util.*;
 
@@ -294,10 +292,9 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
         PosterWindow window = new PosterWindow(this, poster);
         poster = window.getPoster();
         if (poster != null) {
-            collectionOfPosters.add(poster);
-//            gdyby nie zbiory, można by zrobić po prostu:
-//            addPosterToTable(poster);
-            refreshTable();
+            if (collectionOfPosters.add(poster)) {
+                addPosterToTable(poster);
+            }
         }
     }
 
@@ -308,11 +305,11 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
             PosterWindow window = new PosterWindow(this, posterBefore);
             Poster posterAfter = window.getPoster();
             if (posterAfter != null) {
+                tableModel.removeRow(index);
                 collectionOfPosters.remove(posterBefore);
-                collectionOfPosters.add(posterAfter);
-//                jak wyżej, gdyby nie zbiory wystarczyłoby:
-//                editPosterInTable(index, posterAfter);
-                refreshTable();
+                if (collectionOfPosters.add(posterAfter)) {
+                    addPosterToTable(posterAfter);
+                }
             }
         }
     }
@@ -333,18 +330,37 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
                 while (scanner.hasNextLine()) {
                     try {
                         Poster posterToAdd = Poster.loadPosterFromTxtFile(scanner);
-                        collectionOfPosters.add(posterToAdd);
-//                    addPosterToTable(posterToAdd);
+                        if (collectionOfPosters.add(posterToAdd)) {
+                            addPosterToTable(posterToAdd);
+                        }
                     } catch (PosterException e) {
                         JOptionPane.showMessageDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }
-        } else if(filename.endsWith(".bin")){
-
-        }
-
-        refreshTable();
+        } else if (filename.endsWith(".bin")) {
+            ObjectInputStream inputStream;
+            try {
+                inputStream = new ObjectInputStream(new FileInputStream(new File(filename)));
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            while (true) {
+                Poster posterToAdd;
+                try {
+                    posterToAdd = (Poster) inputStream.readObject();
+                    if (collectionOfPosters.add(posterToAdd)) {
+                        addPosterToTable(posterToAdd);
+                    }
+                } catch (EOFException ignored) {
+                    break;
+                } catch (IOException | ClassNotFoundException e) {
+                    JOptionPane.showMessageDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } else
+            JOptionPane.showMessageDialog(this, "Plik musi byc typu .txt lub .bin", "Blad", JOptionPane.ERROR_MESSAGE);
     }
 
     void savePoster() {
@@ -355,13 +371,24 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
                 return;
             }
             Poster poster = getSelectedPoster(index);
-            try {
-                poster.savePosterToTxtFile(filename);
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
+            if (filename.endsWith(".txt")) {
+                try {
+                    poster.savePosterToTxtFile(filename);
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } else if (filename.endsWith(".bin")) {
+                ObjectOutputStream outputStream;
+                try {
+                    outputStream = new ObjectOutputStream(new FileOutputStream(filename));
+                    outputStream.writeObject(poster);
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
             }
         }
-
     }
 
     void saveAllPosters() {
@@ -369,13 +396,30 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
         if (filename == null) {
             return;
         }
-        try {
+        if (filename.endsWith(".txt")) {
             for (Poster i : collectionOfPosters) {
-                i.savePosterToTxtFile(filename);
+                try {
+                    i.savePosterToTxtFile(filename);
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
+                }
             }
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
-        }
+        } else if(filename.endsWith(".bin")){
+            ObjectOutputStream outputStream;
+            try {
+                outputStream = new ObjectOutputStream(new FileOutputStream(filename));
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            for (Poster i : collectionOfPosters){
+                try {
+                    outputStream.writeObject(i);
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } else JOptionPane.showMessageDialog(this, "Plik musi byc typu .txt lub .bin", "Blad", JOptionPane.ERROR_MESSAGE);
     }
 
     void deletePoster() {
@@ -444,7 +488,7 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
             collectionOfPosters.setCollectionName(newName);
             collectionNameField.setText(newName);
         } catch (InvalidNameException e) {
-            JOptionPane.showInputDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -455,7 +499,7 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
             collectionTypeField.setText(String.valueOf(newType));
             refreshTable();
         } catch (InvalidNameException e) {
-            JOptionPane.showInputDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -717,6 +761,9 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
     void loadManyCollections() {
         String filename = chosenFile();
         if (filename == null) {
+            return;
+        } else if(!filename.endsWith(".bin")){
+            JOptionPane.showMessageDialog(this, "Plik musi byc typu .bin", "Blad", JOptionPane.ERROR_MESSAGE);
             return;
         }
         try {

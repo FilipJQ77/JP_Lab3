@@ -57,7 +57,6 @@ public class CollectionApp {
     }
 
     public static void main(String[] args) {
-        //TODO I give up
         new AppWindow();
     }
 
