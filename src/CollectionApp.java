@@ -19,7 +19,21 @@ public class CollectionApp {
         return newCollection;
     }
 
+    static void addCollection(CollectionOfPosters collectionOfPosters){
+        appCollections.add(collectionOfPosters);
+    }
+
+    static CollectionOfPosters getCollection(int index){
+        return appCollections.get(index);
+    }
+
     static void deleteCollection(int index) {
+        CollectionOfPosters toRemove = appCollections.get(index);
+        if(toRemove instanceof SpecialCollectionOfPosters){
+            toRemove.clear();
+            toRemove.hasChanged();
+            ((SpecialCollectionOfPosters) toRemove).deleteParentCollectionsObservers();
+        }
         appCollections.remove(index);
     }
 

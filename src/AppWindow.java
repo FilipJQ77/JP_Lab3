@@ -12,7 +12,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
-import java.util.List;
 import java.util.*;
 
 class PosterWindow extends JDialog implements ActionListener {
@@ -435,7 +434,7 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
         if (isCollectionASet()) {
             JOptionPane.showMessageDialog(this, "Kolekcja typu zbior nie moze byc sortowana", "Blad", JOptionPane.ERROR_MESSAGE);
         } else {
-            Collections.sort((List<Poster>) collectionOfPosters.getCollection());
+            collectionOfPosters.sortAlphabetically();
             refreshTable();
         }
     }
@@ -444,19 +443,7 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
         if (isCollectionASet()) {
             JOptionPane.showMessageDialog(this, "Kolekcja typu zbior nie moze byc sortowana", "Blad", JOptionPane.ERROR_MESSAGE);
         } else {
-            //wyrażenie lambda
-            Comparator newComparator = (o1, o2) -> {
-                Poster p1 = (Poster) o1;
-                Poster p2 = (Poster) o2;
-                int comparison1 = p1.getTheme().compareTo(p2.getTheme());
-                if (comparison1 != 0) return comparison1;
-                int comparison2 = p1.getName().compareTo(p2.getName());
-                if (comparison2 != 0) return comparison2;
-                int comparison3 = Integer.compare(p1.getWidth() * p1.getHeight(), p2.getWidth() * p2.getHeight());
-                if (comparison3 != 0) return comparison3;
-                return Integer.compare(p1.getWidth(), p2.getWidth());
-            };
-            Collections.sort((List<Poster>) collectionOfPosters.getCollection(), newComparator);
+            collectionOfPosters.sortByTheme();
             refreshTable();
         }
     }
@@ -465,19 +452,7 @@ class CollectionWindow extends JDialog implements ActionListener, IWindow {
         if (isCollectionASet()) {
             JOptionPane.showMessageDialog(this, "Kolekcja typu zbior nie moze byc sortowana", "Blad", JOptionPane.ERROR_MESSAGE);
         } else {
-            //wyrażenie lambda
-            Comparator newComparator = (o1, o2) -> {
-                Poster p1 = (Poster) o1;
-                Poster p2 = (Poster) o2;
-                int comparison1 = Integer.compare(p1.getWidth() * p1.getHeight(), p2.getWidth() * p2.getHeight());
-                if (comparison1 != 0) return comparison1;
-                int comparison2 = Integer.compare(p1.getWidth(), p2.getWidth());
-                if (comparison2 != 0) return comparison2;
-                int comparison3 = p1.getName().compareTo(p2.getName());
-                if (comparison3 != 0) return comparison3;
-                return p1.getTheme().compareTo(p2.getTheme());
-            };
-            Collections.sort((List<Poster>) collectionOfPosters.getCollection(), newComparator);
+            collectionOfPosters.sortByArea();
             refreshTable();
         }
     }
@@ -703,6 +678,7 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
         }
     }
 
+
     void addCollectionToTable(CollectionOfPosters collection) {
         String[] data = {collection.getCollectionName(), String.valueOf(collection.getCollectionType()), String.valueOf(collection.size())};
         tableModel.addRow(data);
@@ -712,6 +688,14 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
         tableModel.setValueAt(editedCollection.getCollectionName(), index, 0);
         tableModel.setValueAt(editedCollection.getCollectionType(), index, 1);
         tableModel.setValueAt(editedCollection.size(), index, 2);
+    }
+
+    void refreshTable(){
+        tableModel.setRowCount(0);
+        ArrayList<CollectionOfPosters> appCollections = CollectionApp.getAppCollections();
+        for(CollectionOfPosters collection : appCollections){
+            addCollectionToTable(collection);
+        }
     }
 
     void newCollection() {
@@ -733,7 +717,9 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
         if (index >= 0) {
             CollectionOfPosters editedCollection = CollectionApp.getAppCollections().get(index);
             CollectionWindow window = new CollectionWindow(this, editedCollection);
-            editCollectionInTable(index, editedCollection);
+//            editCollectionInTable(index, editedCollection);
+            editedCollection.collectionHasChanged();
+            refreshTable();
         }
     }
 
@@ -741,8 +727,9 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
         int index = table.getSelectedRow();
         if (index >= 0) {
             CollectionApp.deleteCollection(index);
-            tableModel.removeRow(index);
-        }
+//            tableModel.removeRow(index);
+            refreshTable();
+        }//TODO COŚ NIE DZIAŁA
     }
 
     void loadOneCollection() {
@@ -804,20 +791,50 @@ public class AppWindow extends JFrame implements ActionListener, IWindow {
         }
     }
 
+    void specialCollection(byte specialCollectionType) {
+        String title;
+        switch (specialCollectionType){
+            case SpecialCollectionOfPosters.UNION:
+                title="Suma kolekcji";
+                break;
+            case SpecialCollectionOfPosters.INTERSECTION:
+                title="Czesc wspolna kolekcji";
+                break;
+            case SpecialCollectionOfPosters.DIFFERENCE:
+                title="Roznica kolekcji";
+                break;
+            case SpecialCollectionOfPosters.SYMMETRIC_DIFFERENCE:
+                title="Roznica symetryczna kolekcji";
+                break;
+            default:
+                title="";
+        }
+        CollectionOfPosters firstCollection = (CollectionOfPosters) JOptionPane.showInputDialog(this, "Wybierz pierwsza kolekcje", title, JOptionPane.INFORMATION_MESSAGE, null, CollectionApp.getAppCollections().toArray(), null);
+        CollectionOfPosters secondCollection = (CollectionOfPosters) JOptionPane.showInputDialog(this, "Wybierz druga kolekcje", title, JOptionPane.INFORMATION_MESSAGE, null, CollectionApp.getAppCollections().toArray(), null);
+        SpecialCollectionOfPosters newCollection;
+        try {
+            newCollection = new SpecialCollectionOfPosters(firstCollection, secondCollection, specialCollectionType);
+            CollectionApp.addCollection(newCollection);
+            addCollectionToTable(newCollection);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Blad", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     void unionCollection() {
-        //TODO
+        specialCollection(SpecialCollectionOfPosters.UNION);
     }
 
     void intersectionCollection() {
-        //TODO
+        specialCollection(SpecialCollectionOfPosters.INTERSECTION);
     }
 
     void differenceCollection() {
-        //TODO
+        specialCollection(SpecialCollectionOfPosters.DIFFERENCE);
     }
 
     void symmetricDifferenceCollection() {
-        //TODO
+        specialCollection(SpecialCollectionOfPosters.SYMMETRIC_DIFFERENCE);
     }
 
     void exit() {

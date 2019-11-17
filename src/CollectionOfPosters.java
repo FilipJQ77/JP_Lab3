@@ -40,12 +40,12 @@ enum CollectionType {
     }
 }
 
-public class CollectionOfPosters implements Iterable<Poster>, Serializable {
+public class CollectionOfPosters extends Observable implements Iterable<Poster>, Serializable {
 
-    private static final long serialVersionUID = 7410902562244000480L;
-    private String collectionName;
-    private CollectionType collectionType;
-    private Collection<Poster> collection;
+    protected static final long serialVersionUID = 544818347771453435L;
+    protected String collectionName;
+    protected CollectionType collectionType;
+    protected Collection<Poster> collection;
 
     public CollectionOfPosters() {
         //jak w klasie Poster, domyślny konstruktor ma zawsze poprawne wartości
@@ -79,8 +79,53 @@ public class CollectionOfPosters implements Iterable<Poster>, Serializable {
         return collection.add(poster);
     }
 
-    public boolean remove(Poster poster){
+    public boolean remove(Poster poster) {
         return collection.remove(poster);
+    }
+
+    public void clear() {
+        collection.clear();
+    }
+
+    @Override
+    public Iterator<Poster> iterator() {
+        return collection.iterator();
+    }
+
+    void sortAlphabetically() {
+        Collections.sort((List<Poster>) collection);
+    }
+
+    void sortByTheme() {
+        //wyrażenie lambda
+        Comparator newComparator = (o1, o2) -> {
+            Poster p1 = (Poster) o1;
+            Poster p2 = (Poster) o2;
+            int comparison1 = p1.getTheme().compareTo(p2.getTheme());
+            if (comparison1 != 0) return comparison1;
+            int comparison2 = p1.getName().compareTo(p2.getName());
+            if (comparison2 != 0) return comparison2;
+            int comparison3 = Integer.compare(p1.getWidth() * p1.getHeight(), p2.getWidth() * p2.getHeight());
+            if (comparison3 != 0) return comparison3;
+            return Integer.compare(p1.getWidth(), p2.getWidth());
+        };
+        Collections.sort((List<Poster>) collection, newComparator);
+    }
+
+    void sortByArea() {
+        //wyrażenie lambda
+        Comparator newComparator = (o1, o2) -> {
+            Poster p1 = (Poster) o1;
+            Poster p2 = (Poster) o2;
+            int comparison1 = Integer.compare(p1.getWidth() * p1.getHeight(), p2.getWidth() * p2.getHeight());
+            if (comparison1 != 0) return comparison1;
+            int comparison2 = Integer.compare(p1.getWidth(), p2.getWidth());
+            if (comparison2 != 0) return comparison2;
+            int comparison3 = p1.getName().compareTo(p2.getName());
+            if (comparison3 != 0) return comparison3;
+            return p1.getTheme().compareTo(p2.getTheme());
+        };
+        Collections.sort((List<Poster>) collection, newComparator);
     }
 
     public void saveCollectionToFile(String filename) throws IOException {
@@ -134,23 +179,26 @@ public class CollectionOfPosters implements Iterable<Poster>, Serializable {
         return newCollectionOfPosters;
     }
 
-    @Override
-    public Iterator<Poster> iterator() {
-        return collection.iterator();
-    }
+
 
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(collectionName).append("\n");
-        stringBuilder.append(collectionType).append("\n");
-        for (Poster i : collection) {
-            stringBuilder.append(i).append("\n");
-        }
+        stringBuilder.append(collectionName).append(" ");
+        stringBuilder.append(collectionType).append(" ");
+        stringBuilder.append(" Ilosc elementow: ").append(this.size()).append("\n");
+//        for (Poster i : collection) {
+//            stringBuilder.append(i).append("\n");
+//        }
         return stringBuilder.toString();
     }
 
-    private Collection<Poster> createCollection() throws InvalidNameException {
+    void collectionHasChanged() {
+        super.setChanged();
+        super.notifyObservers();
+    }
+
+    protected Collection<Poster> createCollection() throws InvalidNameException {
         switch (collectionType) {
             case VECTOR:
                 return new Vector<>();
@@ -200,11 +248,11 @@ public class CollectionOfPosters implements Iterable<Poster>, Serializable {
     /**
      * metoda prywatna, ponieważ za zmianę typu istniejącej kolekcji jest odpowiedzialna biorąca wszystko pod uwagę metoda changeCollectionType
      *
-     * @param collectionName
+     * @param collectionType
      * @throws InvalidNameException
      */
-    private void setCollectionType(String collectionName) throws InvalidNameException {
-        setCollectionType(CollectionType.findCollectionType(collectionName));
+    protected void setCollectionType(String collectionType) throws InvalidNameException {
+        setCollectionType(CollectionType.findCollectionType(collectionType));
     }
 
     /**
@@ -213,7 +261,7 @@ public class CollectionOfPosters implements Iterable<Poster>, Serializable {
      * @param collectionType
      * @throws InvalidNameException
      */
-    private void setCollectionType(CollectionType collectionType) throws InvalidNameException {
+    protected void setCollectionType(CollectionType collectionType) throws InvalidNameException {
         if (collectionType == null)
             throw new InvalidNameException("Dany typ kolekcji nie istnieje lub nie jest obslugiwany");
         this.collectionType = collectionType;
@@ -228,8 +276,143 @@ public class CollectionOfPosters implements Iterable<Poster>, Serializable {
      *
      * @param collection
      */
-    private void setCollection(Collection<Poster> collection) {
+    protected void setCollection(Collection<Poster> collection) {
         this.collection = collection;
     }
+}
 
+class SpecialCollectionOfPosters extends CollectionOfPosters implements Observer {
+
+    public final static byte UNION = 0;
+    public final static byte INTERSECTION = 1;
+    public final static byte DIFFERENCE = 2;
+    public final static byte SYMMETRIC_DIFFERENCE = 3;
+
+    private CollectionOfPosters firstCollection;
+    private CollectionOfPosters secondCollection;
+    private byte specialCollectionType;
+
+    public SpecialCollectionOfPosters(CollectionOfPosters firstCollection, CollectionOfPosters secondCollection, byte specialCollectionType) throws Exception {
+        super();
+        setParentCollections(firstCollection, secondCollection);
+        this.specialCollectionType = specialCollectionType;
+        createSpecialCollection();
+    }
+
+    private void createSpecialCollection() throws Exception {
+        this.collection.clear();
+        if (specialCollectionType == UNION) {
+            createUnionCollection();
+        } else if (specialCollectionType == INTERSECTION) {
+            createIntersectionCollection();
+        } else if (specialCollectionType == DIFFERENCE) {
+            createDifferenceCollection();
+        } else if (specialCollectionType == SYMMETRIC_DIFFERENCE) {
+            createSymmetricDifferenceCollection();
+        }
+    }
+
+    private CollectionOfPosters makeCollectionCopy(CollectionOfPosters collection) throws InvalidNameException {
+        CollectionOfPosters collectionCopy = new CollectionOfPosters(collection.collectionName, collection.collectionType);
+        for(Poster poster : collection){
+            collectionCopy.add(poster);
+        }
+        return collectionCopy;
+    }
+
+    private void createUnionCollection() throws InvalidNameException {
+        CollectionOfPosters firstCollectionCopy = makeCollectionCopy(firstCollection);
+        CollectionOfPosters secondCollectionCopy = makeCollectionCopy(secondCollection);
+        this.setCollectionName(firstCollectionCopy.collectionName + " OR " + secondCollectionCopy.collectionName);
+        this.setCollectionType(firstCollectionCopy.collectionType);
+        addCollections(firstCollectionCopy, secondCollectionCopy);
+    }
+
+    private void createIntersectionCollection() throws Exception {
+        CollectionOfPosters firstCollectionCopy = makeCollectionCopy(firstCollection);
+        CollectionOfPosters secondCollectionCopy = makeCollectionCopy(secondCollection);
+        this.setCollectionName(firstCollectionCopy.collectionName + " AND " + secondCollectionCopy.collectionName);
+        this.setCollectionType(firstCollectionCopy.collectionType);
+        Iterator iterator1 = firstCollectionCopy.iterator();
+        while (iterator1.hasNext()) {
+            Poster poster1 = (Poster) iterator1.next();
+            Iterator iterator2 = secondCollectionCopy.iterator();
+            while (iterator2.hasNext()) {
+                Poster poster2 = (Poster) iterator2.next();
+                if (poster1.equals(poster2)) {
+                    this.add(poster1);
+                    iterator1.remove();
+                    iterator2.remove();
+                    break;
+                }
+            }
+        }
+    }
+
+    private void createDifferenceCollection() throws Exception {
+        CollectionOfPosters firstCollectionCopy = makeCollectionCopy(firstCollection);
+        CollectionOfPosters secondCollectionCopy = makeCollectionCopy(secondCollection);
+        this.setCollectionName(firstCollectionCopy.collectionName + " \\ " + secondCollectionCopy.collectionName);
+        this.setCollectionType(firstCollectionCopy.collectionType);
+        removeIntersectionFromBothCollections(firstCollectionCopy, secondCollectionCopy);
+        for (Poster poster : firstCollectionCopy) {
+            this.add(poster);
+        }
+    }
+
+    private void createSymmetricDifferenceCollection() throws Exception {
+        CollectionOfPosters firstCollectionCopy = makeCollectionCopy(firstCollection);
+        CollectionOfPosters secondCollectionCopy = makeCollectionCopy(secondCollection);
+        this.setCollectionName(firstCollectionCopy.collectionName + " XOR " + secondCollectionCopy.collectionName);
+        this.setCollectionType(firstCollectionCopy.collectionType);
+        removeIntersectionFromBothCollections(firstCollectionCopy, secondCollectionCopy);
+        addCollections(firstCollectionCopy, secondCollectionCopy);
+    }
+
+    private void addCollections(CollectionOfPosters firstCollectionCopy, CollectionOfPosters secondCollectionCopy) {
+        for (Poster poster : firstCollectionCopy) {
+            this.add(poster);
+        }
+        for (Poster poster : secondCollectionCopy) {
+            this.add(poster);
+        }
+    }
+
+    private void removeIntersectionFromBothCollections(CollectionOfPosters firstCollectionCopy, CollectionOfPosters secondCollectionCopy) {
+        Iterator iterator1 = firstCollectionCopy.iterator();
+        while (iterator1.hasNext()) {
+            Poster poster1 = (Poster) iterator1.next();
+            Iterator iterator2 = secondCollectionCopy.iterator();
+            while (iterator2.hasNext()) {
+                Poster poster2 = (Poster) iterator2.next();
+                if (poster1.equals(poster2)) {
+                    iterator1.remove();
+                    iterator2.remove();
+                    break;
+                }
+            }
+        }
+    }
+
+    private void setParentCollections(CollectionOfPosters firstCollection, CollectionOfPosters secondCollection) throws Exception {
+        if (!firstCollection.collectionType.equals(secondCollection.collectionType)) {
+            throw new Exception("Kolekcje musza miec zgodne typy");
+        }
+        this.firstCollection = firstCollection;
+        this.secondCollection = secondCollection;
+        firstCollection.addObserver(this);
+        secondCollection.addObserver(this);
+    }
+
+    void deleteParentCollectionsObservers() {
+        firstCollection.deleteObserver(this);
+        secondCollection.deleteObserver(this);
+    }
+
+    @Override
+    public void update(Observable o, Object arg) {
+        try {
+            this.createSpecialCollection();
+        } catch (Exception ignored) {}
+    }
 }
