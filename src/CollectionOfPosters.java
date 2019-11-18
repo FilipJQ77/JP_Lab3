@@ -411,7 +411,7 @@ class SpecialCollectionOfPosters extends CollectionOfPosters implements Observer
     private byte specialCollectionType;
 
     public SpecialCollectionOfPosters(CollectionOfPosters firstCollection, CollectionOfPosters secondCollection, byte specialCollectionType) throws Exception {
-        super();
+        super(" ",firstCollection.collectionType);
         setParentCollections(firstCollection, secondCollection);
         this.specialCollectionType = specialCollectionType;
         createSpecialCollection();
