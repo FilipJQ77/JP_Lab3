@@ -1,8 +1,5 @@
 /*
-    Program: Aplikacja z graficznym interfejsem i operacjami na kolekcjach
-    Plik: CollectionOfPosters.java
-    Autor: Filip Przygoński, 248892
-    Data: Listopad 2019
+Autor: Filip Przygoński
 */
 
 import javax.naming.InvalidNameException;

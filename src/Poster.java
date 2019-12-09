@@ -1,8 +1,5 @@
 /*
-    Program: Aplikacja z graficznym interfejsem i operacjami na kolekcjach
-    Plik: Poster.java
-    Autor: Filip Przygoñski, 248892
-    Data: Listopad 2019
+Autor: Filip Przygoñski
 */
 
 import java.io.FileWriter;
